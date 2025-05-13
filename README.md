@@ -21,6 +21,7 @@ venv/bin/activate
 ######################
 
 pip install PyQt5  # xolos
+pip install pyside6   # https://stackoverflow.com/a/75725971/21185804
 
 ```
 

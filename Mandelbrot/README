@@ -1,0 +1,4 @@
+Source: https://doc.qt.io/qt-5/qtcore-threads-mandelbrot-example.html
+
+The Mandelbrot example demonstrates multi-thread programming using Qt. It shows how to use a worker thread to perform heavy computations without blocking the main thread's event loop.
+
