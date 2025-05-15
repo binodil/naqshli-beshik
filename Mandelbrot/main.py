@@ -19,7 +19,7 @@ class RenderThread(QThread):
 
         self.restart = False
         self.abort = False
-        self.ColormapSize = 512
+        self.ColormapSize = 256
 
     def render(self, centerX:float, centerY:float, scaleFactor:float, resultSize:QSize, devicePixelRatio:float):
         # start the rendering, stop the rendering, re-start rendering
@@ -45,10 +45,11 @@ class RenderThread(QThread):
             # Storing the member variables in local variables allows us to minimize the amout of code that needs to be protected by a mutex.
             # integer copies when init new variable
             # list is pointed to the original list
-            devicePixelRatio = self.devicePixelRatio if self.devicePixelRatio != 0 else 1
-            resultSize = self.resultSize * devicePixelRatio
+            devicePixelRatio = self.devicePixelRatio
+            resultSize = self.resultSize * devicePixelRatio if devicePixelRatio != 0 else self.resultSize
             requestedScaleFactor = self.scaleFactor
-            scaleFactor = requestedScaleFactor / devicePixelRatio
+            print(requestedScaleFactor, devicePixelRatio)
+            scaleFactor = requestedScaleFactor / devicePixelRatio if devicePixelRatio != 0 else requestedScaleFactor
             centerX = self.centerX
             centerY = self.centerY
             self.mutex.unlock()
@@ -57,9 +58,10 @@ class RenderThread(QThread):
             halfWidth = resultSize.width() // 2
             halfHeight = resultSize.height() // 2
             
+
             pil_image = Image.new("RGB", (resultSize.width(), resultSize.height()))
-            image = QImage(resultSize, QImage.Format_RGB32)   # QImage image(resultSize, QImage::Format_RGB32);
-            image.setDevicePixelRatio(devicePixelRatio)
+            # image = QImage(resultSize, QImage.Format_RGB32)   # QImage image(resultSize, QImage::Format_RGB32);
+            # image.setDevicePixelRatio(devicePixelRatio)
             
             NumPasses = 8
             pass_ = 0
@@ -71,7 +73,6 @@ class RenderThread(QThread):
                 Limit = 4
                 allBlack = True
                 for y in range(-halfHeight, halfHeight):
-                    # print(y)
                     if self.restart:
                         break
                     if self.abort:
@@ -95,15 +96,35 @@ class RenderThread(QThread):
                                 break
 
                         if num_iterations < MaxIterations:
-                            pil_image.putpixel((x + halfWidth, y + halfHeight),
-                                        num_iterations % self.ColormapSize)
+                            # color_tuple = (
+                            #     num_iterations % self.ColormapSize, 
+                            #     (num_iterations**2) % self.ColormapSize, 
+                            #     (num_iterations**3) % self.ColormapSize)
+                            
+                            color_tuple = (
+                                255 - num_iterations % self.ColormapSize, 
+                                255 - (num_iterations * 2) % self.ColormapSize, 
+                                255 - (num_iterations * 4) % self.ColormapSize)
+                            # color_tuple = (255, 0, 0)
+                            # if itevations are very small, it means they are not stable. dark red means not stable, white means stable
+                            # color_tuple = (255 - int(255 * num_iterations/MaxIterations), 0, 0)
+                            # color_tuple = (
+                            #     num_iterations % self.ColormapSize, 
+                            #     0, #num_iterations % self.ColormapSize, 
+                            #     0, #num_iterations % self.ColormapSize,
+                            #     # num_iterations % 255,
+                            #     )
+                            pil_image.putpixel((x + halfWidth, y + halfHeight), color_tuple)
+                            # print("Color is ", num_iterations % self.ColormapSize)
                             # image.setPixel(x + halfWidth, y + halfHeight,
                             #             self.colormap[num_iterations % self.ColormapSize])
                             # image.setPixel(x + halfWidth, y + halfHeight, 3)
                             allBlack = False
                         else:
-                            pil_image.putpixel((x + halfWidth, y + halfHeight), (0, 0, 0))
-                            # image.setPixel(x + halfWidth, y + halfHeight, 1 )
+                            color_black = (0, 0, 0)
+                            color_white = (255, 255, 255)
+                            color = color_black  # black means stability, singularity like black holes
+                            pil_image.putpixel((x + halfWidth, y + halfHeight), color)
             #-----------
                 if allBlack and pass_ == 0:
                     pass_ = 4
@@ -175,8 +196,9 @@ class MandelbrotWidget(QWidget):
             print("Drawing with qFuzzy if compare")
             painter.drawPixmap(self.pixmapOffset, self.pixmap)
         else:
+
             print("Drawing with previewPixmap: round(self.pixmap.devicePixelRatioF(), 2): ", round(self.pixmap.devicePixelRatioF(), 2))
-            previewPixmap = self.pixmap if round(self.pixmap.devicePixelRatioF(), 2) == 1 else pixmap.scaled(self.pixmap.size() / self.pixmap.devicePixelRatioF(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            previewPixmap = self.pixmap if round(self.pixmap.devicePixelRatioF(), 2) == 1 else self.pixmap.scaled(self.pixmap.size() / self.pixmap.devicePixelRatioF(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
             scaleFactor = self.pixmapScale / self.curScale
             newWidth = int(previewPixmap.width() * scaleFactor)
             newHeight = int(previewPixmap.height() * scaleFactor)
