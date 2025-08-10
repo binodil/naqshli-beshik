@@ -70,7 +70,7 @@ class RenderThread(QThread):
                 print("pass value: ", pass_)
                 MaxIterations = (1 << (2 * pass_ + 6)) + 32  # bitwise operation 
                 print("MaxIterations is ", MaxIterations)
-                Limit = 4
+                Limit = 4000
                 allBlack = True
                 for y in range(-halfHeight, halfHeight):
                     if self.restart:
@@ -104,7 +104,8 @@ class RenderThread(QThread):
                             color_tuple = (
                                 255 - num_iterations % self.ColormapSize, 
                                 255 - (num_iterations * 2) % self.ColormapSize, 
-                                255 - (num_iterations * 4) % self.ColormapSize)
+                                255 - (num_iterations * 4) % self.ColormapSize
+                                )
                             # color_tuple = (255, 0, 0)
                             # if itevations are very small, it means they are not stable. dark red means not stable, white means stable
                             # color_tuple = (255 - int(255 * num_iterations/MaxIterations), 0, 0)
