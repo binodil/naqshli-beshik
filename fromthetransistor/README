@@ -33,3 +33,68 @@ Table of content:
 
 
 Credit to https://github.com/geohot/fromthetransistor
+
+#---------- http://www.pbs.org/transistor/science/info/chip.html -------
+Integrated Circuits (ICs) are simply a square of silicon which has electric circuit, numerious transistors, wires and other electric devices.
+IC are possible thanks to first inventors Jack Kilby and Robert Noyce (1958). Chips are not build upon wood, stones, it is built on semiconductor crystal. Conductor is a material which allow a flow of electricity. The chip starts as a thin wafer of P-type silicon. Components are added at certain temperature. Chemecals are added to block alectricty or to allow at certain places. NEx wafer layer is added on top of that wafer.
+
+Who is Shockley? What was his idea in 1945?He failed to build it?
+1948, Brattain and Bardeeen build first working transistor, the germanium point-contact transistor. Then what kind of architecture he applied to the chip design?
+Based on his idea, John Atalla developed a new IC. What is it in 1960?
+TOday most IC are based on John Atalla idea.
+What is MOS-FETS?
+http://www.pbs.org/transistor/science/info/transmodern.html
+
+-----------
+What is the desing of it? So transistor has 3 IO, power, in and out. then makes incoming signal 0 or 1.
+
+Lessons from the Early Days of Semiconductors: https://youtu.be/qhJaq3kl6Dc?si=nRYI31Lxn2ad3liF
+1799 - Volta (Battery) (stack of item with zink)
+1831 - Faraday
+what is a galvanometer?
+1833? - Semiconductors wheatstone bridge
+
+He is able to measure the resistance of natural mineral, metals. He liked a silver based conductor. That was a semiconductor. Silver solfied, the resistance got less as it is heated up. Faraday is a smart guy. 
+1877 - Braun | He was interested in why a lot of minerals act in that way?
+1879 - Hall (U.S. graduate) - Hall Effect. What is it? Hint: before the electron discovery and positive and negative electrons are not discovered.
+1906 (Pickard) Silicon Point contact detector | What is the first application of the semiconductor? R**** in ship. He made experiments with different materials to buiild consistant semiconductor detector.
+1907 - 1911  Baedeker | COntrolled Doping of Semiconductor
+1920s - Home Crystal Sets
+1925 - Lilienfeld | MESFET - No amplifiers at that time in radio receivers. He wanted to build amplifier which a semiconductor.
+1928 - Lilienfeld - MOSFET - Metal oxyde semiconductor Field Effect transistor. Every modern device uses it in 21th century
+
+1928 - 1931 : Bloch, Peierls, Wilson, Pauli, Heuisenberg, Band Picture |  
+1939 WWII began. Everybody in the war.
+1940 - 1946 MIT RAD Lab in U.S. | People are working in vacuum tubes, radio. But radar sets tot he airplanes in the military
+Our story of Controlled electric current
+
+1941 - Rad Lab
+What is the silicon - It is a material. Silicon breast, silicon valley. Silicon is achemical element.Atom number is 14. (Si). Adundant element next to the oxygen.
+1942 - Schottky Barrier theory & Experiment
+# Key | Point-Contact Transistor | A contractor for the Rad Lab
+1948 - Bardeen & Brattain | Point-Contact Transistor
+
+How the machine code actually controls the chip!?
+
+1955 - Derik & Frosch | Diffusion | Oxyde Masking!!!
+
+Diffuse the things right, you can diffuse. It is a diffused silicon transistor.
+Diffusion technique happends in the certain temperature and in certain temperature you can add more items.
+1956 - Tannenbaum, Thomas, Lee. Huge success
+1954 - PSI (Pasific semiconductor industry? (Is it correct)
+Bright Ph.D form new company the diffusion. F company
+
+1959 - Kilby - All-semiconductor circuit in a semiconductor.
+Technology is booming!!!!!
+Planar Process - 1959 Hoerni | From "Makers of the microchips"!
+
+
+
+
+
+
+
+
+
+
+
