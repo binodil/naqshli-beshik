@@ -1,0 +1,35 @@
+# From the Transistor to the Web Browser
+
+Discover by yourself! 
+- "Closer to being real." -- @geohot
+
+Table of content:
+1. Cheating our way past the transistor.
+2. What language is hardware coded in?
+3. Processor. What is a processor anyway?
+4. Compiler. A 'high' level language.
+5. Operating System: Software we take for granted.
+6. Browser: Coming online.
+7. Physical: Running on real hardware.
+
+
+
+1. Cheating our way past the transistor
+  - Transistor and relay and switches. How vacuum transistors work?
+  - Truly parallel?!
+  - Describe how FPGAs are buildable using transistors?
+ 
+  - Is ICs are just collections of transistors?
+  - What is LUTs?
+
+
+
+2. To Be Continued!
+3. TBC
+4. TBC
+5. TBC
+6. TBC
+7. TBC
+
+
+Credit to https://github.com/geohot/fromthetransistor
