@@ -90,6 +90,53 @@ Planar Process - 1959 Hoerni | From "Makers of the microchips"!
 
 
 
+#-----------
+We can use NandGame (simulator) 
+
+Default Off relay
+C: 1 and in: 1 --> return 1
+C:0 and in: 1 --> return 0
+C:1 and in:0 --> return 0
+C:0 and in:0 --> return 0
+
+Default ON relay
+C:1 and in: 1 --> return 0
+C:0 and in: 1 --> return 1
+C:1 and in: 0 --> return 0
+C:0 and in: 0 --> return 0
+#--------------------------------
+
+nand component: (it must real)
+a: 1 and b: 1 -> 0
+a: 0 and b: 1 -> 1
+a: 0 and b: 0 -> 1
+a:1 and b: 0 -> 1
+
+-------------------
+Inv component:
+o -> 1
+1 -> 0
+-----------------
+AND operation
+0 and 0 -> 0
+1 and 0 -> 0
+0 and 1 -> 0
+1 and 1 -> 1
+----------------
+OR operation
+0 and 0 -> 0
+0 and 1 -> 1
+1 and 0 -> 1
+1 and 1 -> 1
+_______________
+
+XOR operation
+0 and 0 -> 0 
+0 and 1 -> 1
+1 and 0 -> 1
+1 and 1 -> 0
+
+
 
 
 
