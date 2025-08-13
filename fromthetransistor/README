@@ -197,5 +197,24 @@ WE need a verilog emulator. In MacOS we can use bew install icarus-verilog/
 In Linux, ypou can use sudo apt install iverilog.
 
 
+In verilog, you need to think in 4 dimensions. 
 
+Display values in hex, 
+
+We need to implement decoder
+
+
+Verilog is a language. Memory interface must be implememted.
+
+
+CPU code of verilog is compiled and deployed to the fpga. CPU is runnning in 50MHz;
+Verilog is used to write own chip architecture.
+CPU are now running in 6Hz to visually debug and see how it was working.
+
+Inv erilog the indexing in inclusive. arr[1:5], here it is inclusive
+
+Xilinx Zynq is a board name
+
+Accelerator which does not have CCIX, will be out-competed! (Cache Coherent Interconnect for Accelerators)
+-----
 
