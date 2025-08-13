@@ -140,7 +140,61 @@ XOR operation
 
 
 
+#----------RISC-V----------#
+RISC-V(five) is an open-source CPU architecture
+Most PC uses x86 CPU architecture.
+Intel Core is also a cpu architecture. CPU is set of instructions.
+AMD Ryzen is also a CPU architecture.
+Qualcomm Snapdragon is also CPU architecture.
+Apple M1, Nvidia Tegra, Intel Pentium, Intel Atom, Intel 8086, Motorola 6809, Intel Core i7, Intel Core i5, Intel Core i9 (is a architecture name), Nvidia Ampere, AMD k5, AMD Duron, Nvidia Turing, IBM smth, etc. IBM 704 (1950s cpu architecture). 8 bit archtiecture, Intel 8008. Ancestor is Intel 4004 based on binary-coded decimanl (BCD). RISC(reduced instruction set computing) vs CISC (complex instruction set computing). MISC (minimal instruction set computer), , VLIW (Very long instruction word) computers.
 
+CPU architecture in small device and phones it is ARM architecture
+
+RISC-V is similar to ARM, but it is much cleaner and it is open-source.
+
+
+Verilog is not programming language as python. It is much low-lever
+We have bin(0b0000), oct(0o000), hex (0x000)
+
+We have Ops such as LUI, LOAD, STORE, AUIPC, BRANCH, JAL, JALR, IMM, OPS, MISC, SYSTEM
+We have Funct3 as ADD, SUB, SLLI, SLYU, XOR, OR, AND, SRL
+
+# this is how the microprocessor are working in the low level. 
+
+Each process has a step: 
+  1) Intruction fetch
+  2) Instruction decode
+    - to J-type instruction
+    - to I-type instruction
+    - to other instruction
+  3) Execute
+  4) Access
+  5) Write-back
+
+### LESSON: Use several tabs (windows in tmux) to (1) write in vim; (2) run the code; (3) browse source code, etc.
+In tmux to switch between tmux, you use arrows use ctrl+numbers. use ctrl+b equivalaent twice to switch to previous window.
+In order to create new window use ctrl+c. it creates new window. If you need more hints on shortcuts use <<?>>
+
+Installing Linux distribution to the M series chip is not completed yet. It takes time. The macos with Intel chips, so they have intel cpu archtiecture, they can replace the OS with the linux ubuntu. It is well known method. 
+
+
+
+What is the register? In the instruction development?
+Regestors are zero, ra, sp, gp, tp, ect.
+Each register has ABI Name.
+x0 is zero (hard-wired zero). What is a saver? Assembler mnemonics, so x0-x31 they store, return address, stack pointer, global pointer, thread pointer, temporary register, etc, floating point temopraries, etc
+
+
+There are many types of instructions.
+
+What is the clock in the varelog? Is it the speed of  each single opearion t be ondivte.
+
+
+How to code in verilog??
+filename.v is the sample of the verilog file
+
+WE need a verilog emulator. In MacOS we can use bew install icarus-verilog/ 
+In Linux, ypou can use sudo apt install iverilog.
 
 
 
