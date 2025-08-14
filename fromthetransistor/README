@@ -218,3 +218,166 @@ Xilinx Zynq is a board name
 Accelerator which does not have CCIX, will be out-competed! (Cache Coherent Interconnect for Accelerators)
 -----
 
+XILINX is AI company which makes AI based FPGA, Chips.
+
+
+Okay ! (https://gfxcourses.stanford.edu/cs149/fall22content/media/multicorearch/02_basicarch_HAzYV7A.pdf)
+A program is a list of processor instructions!
+Your python code --> interpreted into the assembly code.
+What does a processor do? It perform computations like binary, trinary, arithmetic. Not exactly!
+It executes instructions. To execute each instruction it should fetch, read, execute, and go back again.
+
+In processor, its first task is to determine what instructions to run next. (Fetch/decode)
+Next, we use ALU (execution unit) --> execution unit:performs the operation described by an instruction, which may modify values in the processor's registers or the computer's memory.
+Lastly, registers: maintain program state: store value of variables used as inputs and outputs to operations.
+
+One instruction can be run per clock.
+
+in the assembly code, it will be like instuction code-whitespace-registers-memory-addr
+
+We have superscalar processor (This processor can decode and execute up to two instructions per clock)
+
+Superscalar execution: processor automatically finds indeoendent instructions in an instruction sequence and can execute them in parallel on multiple execution units. Wow! Two cores means two instructions can be run in parallel. It depends on the intructions, which compiled in assemble. If original code is written with care for multithreading then it can be achieved. In practice you do not receive 2x speed with 2 cores. Instead it might be 1.5x speed or lower.
+Does intel sucks too?
+
+Intel Comet Lake 10th generation core i9 10 core cpu. It has 10 cores. So 10 instructions can be run in parallel in theory.
+
+nanochip is the same for cpu and gpu, but because they goal is different the placement of object is different.
+NVIDIA Ampere GPU has 84 "SM" blocks (2020)
+
+Intel Xeon Phi Knights Corner has 72 core CPU. That is a massive power, is not it! (2016)
+
+
+Apple A13: Two big cores + four small cores (2019)
+Iphone Xr has A12 chip. They are basaed on ARM architecture. They include superscalar execution. That is awesome.
+A12 was launched in 2018. Discontinued in 2022. designed by Apple (actually by a startup chip company). Manufacturer is TSMC. CPU clock rate of A12 is up to 2.49 GHz. Cache L1 cache (128 KB) L2 cache 8 MB. ARM is instruction sets. They used A64-ARMv8.3-A; Number of transistors is 6.9 billions. Cores: 6 cores + GPU cores. A12 has video codec encoding support for HEVC , H.264. So thet chip has instructions for that codecs.
+
+Teardown of Iphone Xr: https://www.ifixit.com/Teardown/iPhone+XR+Teardown/114123
+
+
+To sum up, there are three different forms of parallel execution in the literature:
+1) Superscaler -> exploit ILP within an isntruction stream. Process different instrucitons from the same instruction stream in parallel (within a core).  
+2) SIMD: multiple ALUs (Arithmetic logicl units) controlled by same instruction (within a core).
+  - Efficient for data-parallel workloads.
+
+3) Multi-core: use multiple processing cores;
+  - provides thread-level prallelism. Simulataneously execute a completely different instruction stream on each core.
+  - Software created threads to expose parallelism to hardware (via threading API)
+
+Any program's memory is organized as an array of bytes. Each byte is identified by its address in memory. A byte stored at address 0x8 has value of 32. what is 32? We have instuction like load. It means load a value from memory to the register R0 or equivalent.
+
+Stalls:
+A processor stalls when it cannot run the next instruction in an instruction stream because of a dependency on a previous instruction that is not yet completed. Major source of stall is low speed or failure in loading from memory to the chip.
+
+
+Recall, memory is just an array of values!  So processor has registers and these registers values are stored in caches. False!!!!!! Not like that!!!!! Caches such as L1 and L2 are just on-chip memory. You still need to load and store to that memory. Just the loading and storing time will be much better than reading from RAM.
+What data does processor decide to keep in cache. Caches are usually very small.Keywords: Direct mapped cache, set-associative cache, cache line?
+We can round it as LRU policy for now (least recently used) - to make rooom for new data, throw out the data in the cache that was assessed the longest time ago.
+
+data access time in L1 cache is the fasters. maybe 4 number of cycles in 4 GHz. Data in L2 and L3 are 12 cycles and 38 cycles in 4 GHz clock. Access the data in DRAM in best case 248 cycles in 4 GHz board.
+
+Pre-fetching to the cache reduce the stalls (latency).
+
+Multi-threading reduces stalls> How? they are just a bunch of processors, but still need to access memory anyway!
+
+There is the key takeaway!
+
+What is the bandwidth? 
+  - So bandwidth is the number of items can be carried; Lets say you need to do a laundry. Bandwdth is one if you take one cloth, wash, dry total (105 minutes). Badwidth of washer can be improved to 10 kg of cloth.
+
+How would you solve the element-wise vector multiplication of A and B vector of 1 billion values? A for loop?
+
+What is a bandwidth? Why it is a problem?
+What is the latency?
+How does multi-threading can help us?
+How does not GPU care about multi-threading.
+
+Awesome and high quality course is in https://gfxcourses.stanford.edu/cs149/fall24/
+
+Learning GPU and CUDA but faster: https://gfxcourses.stanford.edu/cs149/fall22content/media/multicorearch/02_basicarch_HAzYV7A.pdf
+
+Do the programming assignments!! Simple renderer in CUDA, Optimzie DNN, Schedule task, etc
+
+Standford resouces are great and they have solid exeprices, assignments and projects to do in the course. But they are not the 100% fit to your attitude for learning. So make sure your attitude is first, then the stanford is second. Stanford goal is to reach to more people. Make it more accessable for people, not for you only.
+
+Assembly code has a several parts 1) name of the function and the memory address where the code for this function starts, 2) Memory addresses and corresponding machine code in hexadecimal codes. Different instruction has different byte lengths. 3) human readible version of the assemble code for each instruction.
+
+
+Each instruction has an operation name (opcode). Each instruction can also have arguments (operands). There are different opcodes. Some opcodes like add, mov,ld, st, etc, may have arguments with them like $0x1,%eax;
+
+
+truth is that c-code allows us to write code, work with variables, types in higher level abstraction so we are machine or assemble agnostic!
+
+Each processor has a registers
+
+In x86 there are 16 registers available. They store a variables. They are fast read/write memory slots.
+Data which needs to be calculated is moved to the register first. So instruction one is to write to the register. second instruction is to read from register and do logital operation on it like 'NOT'. 
+
+
+Example:
+-------
+int sum = x + y;  ||||  1) copy x into register 1; 2) copy y into register 2, 3) add register 1 and register 2; 4) write register 1 to memory for sum.
+
+
+
+Instruction sets are x86-64; ARM, MIPS, RISC-V
+ATmega328 is a chip in most Arduino. It is based on the RISC 8bit Hardard architecture. Performance is 20 MHz.
+SRAM is 2 KB, Flash memory (32 KB?)
+
+
+ESP32-C3 is on NodeMCU board. It has a single-core 32-bit RISC-V CPU with 160MHz clock. It has a wifi and a bluetooth support too!
+
+
+https://web.stanford.edu/class/archive/cs/cs107/cs107.1258/lectures/10/Lecture10.pdf
+
+We can retrieve the information with a gcc and assembler code.
+
+mov    $0x0,%rdx  -> maybe long x = 0;
+mov    %rdx,%rcx  -> maybe long x = y;
+mov    $0x42,(%rdi) -> maybe *ptr = 0x42;
+mov    (%rax,%rcx,8),%rax  ->  maybe long x = arr[i];
+
+https://godbolt.org/ --> multi compliter-assembly code review!!
+It has all of them! Both ARM, x86-64, RISC-V, etc.
+
+%rip register stores the address of the next instruction to execute (it is in x86-64),
+Instrcutions are just bytes. In memory we have stack, heat, data and text (code). All instruction is just a byte at special address. Program counter (PC) is the well known name for %rip. In the end of each instuction there is a %rip% instruction.
+
+
+Python code does not compile, instead it is interpreted with python3.12, python3.10 and etc. They follow similar assembly format.
+
+
+Practice the arduino or ESP-C3 code.   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
