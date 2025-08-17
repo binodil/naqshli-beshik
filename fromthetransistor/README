@@ -136,6 +136,48 @@ XOR operation
 1 and 0 -> 1
 1 and 1 -> 0
 
+001 - 1
+010 - 2
+011 - 3
+100 - 4
+101 - 5
+110 - 6
+111 - 7
+
+11 & 11 -> 110
+01 & 11 -> 100
+10 & 11 -> 101
+
+11 & 01 -> 100
+01 & 01 -> 010
+10 & 10 -> 100
+01 & 10 -> 011
+
+01 == 001 == 0001 == 0000000000000001
+10 == 010 == 0010 == 0000000000000010 # last one is 16-bit
+
+
+10 - 00 = 10  (10 + 00 + 10) = 01
+10 - 01 = 01  (10 + 10  = 01
+11 - 01 = 10
+11 - 10 = 01
+
+A + (B_invert) + B ?
+A - B = C
+A < C
+C = Lim - A + Lim - B + 1
+01 + 11 + 1 = 10
+01 + 10 + 1= 01A
+
+A + (Lim-B) = 
+A- B = C = Lim -
+
+16 bit: 1111111111111111
+16 bit: 0000000000000000
+
+
+
+
 
 
 
@@ -348,6 +390,18 @@ Python code does not compile, instead it is interpreted with python3.12, python3
 
 
 Practice the arduino or ESP-C3 code.   
+
+Yes, maybe I do not know the hardware, but I am sure the answer is pretty obvious from the combination in toolbox. I do not know the SR Latch. But it is basically a set/reset latch block. It is such a special block so it has a state of 1 bit.
+
+
+
+
+
+Why TSMC is the most well-known FAB? What kind of business does other chip maker companies do? Sell chips to customer. But except TSMC, and maybe GlobalFoundries, other can not share their chip designs companies like Samsung. So the fabless companies mostly rely on TSMC. Their business model win over Intel and samsung for such long turn because its founder submission and his founder saw every ups and down of chips from first day of transistor productions. Taiwanese behemoth.  Jack Kilby invented the chip and Morri Chang is the founder of the TSMC. 
+
+
+
+
 
 
 
