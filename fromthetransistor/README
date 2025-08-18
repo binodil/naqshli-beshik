@@ -401,7 +401,45 @@ Why TSMC is the most well-known FAB? What kind of business does other chip maker
 
 
 
+What is the Ohm's Law? I remember there were a ampher, Resistance, power, https://www.allaboutcircuits.com/textbook/direct-current/chpt-2/voltage-current-resistance-relate/ (recommended)
+Resistance, current, power, etc.
 
+Electricity: When is it created? How is it created? Write questions to help people to discover! Do not write them description, just give hints, so their brain may work.
+DC and AC?? Omp formula?
+Logical Gates, Arithmetics Gates?
+
+
+FPGA implementation fo the nand2: https://gitlab.com/x653/nand2tetris-fpga/-/tree/master/00_Requirement?ref_type=heads
+
+There are many directions and many paths some of the are very deep while some of them shallow. You may get stuck with such hardware stuff for a long time. You can for sure build a pc, 8bit pc. But I need you to build it by yourself. No direct help. You may get a hints, otherwise you will not have a proper golden path history in your brain, to which you can rely anytime in the future! It is expensive path to obtain, yet worthwhile.
+
+Python
+-----
+Interpreter
+------
+
+
+C code
+------
+Assembly code for x hardware (CLANG, GCC, etc)
+------
+Deploy to the hardware. 
+------
+It works based on the instructions of the chip. Inctructions are special bit patterns like 0011001 or 001000010 etc, where it maps to logic or arithmetic or etc instructions. In this instruction, device find opcode, input memory address, output memory address if necessary.
+------
+Build own instructions? RISC-V si good fundamental
+------
+each instruction is like access a RAM, init a register, do arithmetics
+------
+Each instructions is run in basic gates like XOR, OR, AND, NAND, which are consist of CMOS circuits. CMOS - Complementary MOSFET circuits. These curcuits input 0 and/or 1 based on the power given. CMOS consists of two complemnetary transistors, NMOS, PMOS. The simpliest CMOS circuit is inverter (INV) (NOT) logic; From it NAND component can be created! Source is github os01/Operating_Systems_From_0_to_1.pdf
+------
+Instuctions then are performed based on the clock rate, instruction name
+------
+
+Remember we need to be thanksful for what we have now and what kind of power we are responsible for (we are controlling)!
+
+
+FPGAs are an abstraction for building own instructions, editing own instrctions.These instructions can be programmable because FPGAs are a huge collection of logical gates all together. Can I say that I can create my new logic gate with fpga? I think no. They whole logic gates are preinstalled to the fpgas. You cannot add new component directly. You can use arduino kit, breadboard and a small power to do your own.
 
 
 
