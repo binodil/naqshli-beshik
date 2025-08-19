@@ -441,6 +441,292 @@ Remember we need to be thanksful for what we have now and what kind of power we 
 
 FPGAs are an abstraction for building own instructions, editing own instrctions.These instructions can be programmable because FPGAs are a huge collection of logical gates all together. Can I say that I can create my new logic gate with fpga? I think no. They whole logic gates are preinstalled to the fpgas. You cannot add new component directly. You can use arduino kit, breadboard and a small power to do your own.
 
+We write an assamly code into the file and save it. Then the computer calls assembler to read the file and fetch instructions. How is the first assembly is created? When we have only instructions and opcodes. So people write them by hand. A person was an assembler at that time. We have instructions as an array of binary patterns of maybe length of 10bit values. First 2 bit may represend the opcode, the remaining 8 bit may represent a register or memory address and so on.
+
+Each computer processor each core implement the following process:
+1) Fetch an instruction bit pattern from a storage device.
+2) Decode the instructions. What is each bit stands for.
+3) Execute the instructions.
+4) Go back to 1) step.
+
+The Apollo space program from 1961-1972, was built entirely with NOR gates. 
+
+As time goes by, people realized that many pieces of assembly code had repeating patterns of usage. Yes assembly language is a step up (new convinient abstraction over writing raw 0 and 1 instructions by hand). The people at that time said it would be nice if instead of writing all the repeating blocks of code all over again in all places, we simply refer to such blocks of code with easier to use text forms. For example,a block of assembly code checks whether one variable is greater than another and if so, execute a block of code, else execute another block of code. In C, such block of assembly code is represented by an if statement that is close to human language.Instead of whole block of assembly where person needs to write which address to access, what to compare, what arithmetics to do, instead replace with if else statements which behind the scene do the equivalent with help of compiler. The program which translates such text forms to machine code is called a compiler. First practical compiler was written in 1951 by Corrado Bohm (italian computer scientist, source: wikipedia).
+
+
+Remember!
+  Any software logic a programming language can implement, hardware can also implement. The reverse is also true: any hardware logic that is implemented in a curcuit can be reimplemented in a programming language. The simple reason is that programming languages, or assembly languages, or machine languages, or logic gates are just languages to express computations. At the end of the day, programming languages are tranlated to machine instructions that are valid to a CPU or GPU and so on.
+
+ In programming languages spectrum we have low level and high level languages. Some high level languages are Python, Java?, Go.A python programmer cannot manipulate underlying hardware, despite being able to deliver the same computations as low-level languages. C is low level language. It can control the underlying hardware better. You can control the memory and do with it what you want. You can achieve better performance for that hardware. High-level languages hide hardware details to free programmer from dealing with irrelevant details not related to current problem domains. Such convenience is not free: it requires software to carry an extra code for managing hardware details like garbage collector (memory) thus making the code run slower, and it makes hardware programming difficult or impossible. it creates weak programmers in terms of debugging the complexity (they will be far from the earth, for from reality). C is a thin abstruction (wrapper) for writing operating systems. It is easy to debug C code for the hardware.
+
+Abstruction is a way of hiding a complexity that is irrelevant to the problem in context. For example, writing programs without any other layer expect the lowest layer: with circuits. Not only person needs in-depth understanding of how circuits work, making it much more obscure to design a circuit because the designer must look at the raw circuits but think in higher-level such as logic gates. It is same as solving math problem not straight with formula or linear algebra but use arithmetics. 
+
+Why abstruction works!
+1) Logic gates abstract away the details of CMOS circuits.
+2) Machine language abstract away the logic gates, arithmetic gates, switches, clock, selector, RAM, register, switch, etc
+3) Assembly language abstract away the details of machine languages
+4) Programming languages abstracts away the details of assembly languages.
+
+
+Logic gates hides the l anguage of circuits and focuses on how to implement primitive Boolean functions and combine them to create new functions. All logic gates receive input and generate output as binary numbers.
+
+Human already developed a systematic discipline for studying patterns: Mathematics! Quote from G. H. Hardy (2005): A mathematician, like a painter or a poet, is a maker of patterns. If his patterns are more permanent than theirs, it is because they are made with ideas.
+
+Isn't that a mathematical formula a representation of a pattern? Mathematics provides a formal system to identify and describe existing patterns in nature.
+
+Linux is full of applications controlled by many domain-specific lamguages and are placed in /etc directory, such as a web server. Instead od reprogramming the software, a domain-agnostic language is made for it.
+
+
+#------------------CHAPTER 3 of Operating Systems from 0 to 1 bby os01 github repo----------------------
+-------------------Computer Architecture-------------------
+To write lower level code, a programmer must know the set of instructions of the computer, all other hardware components like memory, buses, and so on.
+In the literature we have general-purpose computer and single-purpose computers.
+A Server is a general-purpose computers (high-performance computer).
+Desktop is general-purpose computer too!
+Mobile computers! Game consoles! 
+Another type of computers are embedded computers. An Embedded computer is a single-board or single-chip with limited resources designed for integrating into larger hardware devices. A microcontroller is an mbedded computer design for controlling other hardware devices. Microcontroller is general-purpose computers. They have limited resources. It has a chip or logic gates inside. Another type of embedded computer is system-on-chip. System-on-chip is a full computer on a single chip. Microcontroller is designed to control other hardwares, while system-on-chip is designed to be a standalone computer in single chip. Apple A5, A11, M1, Qualcomm Snapdragon they are all system-on-chip.
+
+PBC - Printed Circuit Board  is physical board that contains lines and pads to enable electron flows between electrical and electronics components. 
+Writing a program for ebdedded devices is called embedded programming. Embedded computers are used in automatically controlled devices including power tools, toys, implantable medical devices, engines, appliances, remote controls, and so on.
+SoC and microcontrollers has a blurry lines.  System-on-chip can perform all tasks of microcontroller while mictrocontroller can not do reverse. Software for microcontroller requires little computing resources. System-on-chip can easily support operating systems, but microcontrollers may not, except the latest ones. Raspberry Pi may have SoC by broadcom, or so on. This is the heart of almost all hardware companies.
+
+FPGA (Field Programmable Gate Array) We can combine several chips and use them in sync, are not we? For example each 74HC00 chip can be configures as a gate, and we can build pwoerful chip by combining them. FPGA devices are an array of thousands of logical blocks (CMOS, mini-circuits) which are programmable with a languages such as Verilog. FPGAs can be optimized in such way that you can achieve true parallel computation and true fastest possible speed. Code in the FPGA are applied in a logic level, in level of circuits logics, while in the microcontroller or SoC, it is an assemble code or C or higher.
+FPGAs are great when regular computers are slow or does nto fit the domain. For example, real-time medical image processing, cruise control system, video encoding/decoding, defense, finance etc. 
+
+Application-Specific Integrated Circuit (ASIC) is a chip designed for a particular purpose rather than for general-purpose use. ASIC is a final stage of FPGA chips. ASICs are very costly to implement because they are physical and manufacturing once done, it maybe impossible to change the circuit inside.
+
+John von Neumann invented a computer architecture which is the original version of modern computers. CPU communicares with Control bus, Address bus, Data Bus. All these busses are in system bus. Busses are a wire or road to send raw bits between the above components. Instructions are stored in memoy (RAM or Disk) and the cpu fetches them via a data bus.
+
+Many OS concepts are already implemented directly in hardware, e.g. task switching, paging, etc. A kernel programmer needs to know how to use the hardware features, to avoid duplicating such concepts in software, thus wasting computing resources. To effectively use the CPU, a programmer needs to understand the documentation provided from CPU manufacturer. After understanding one CPU architecture well, it is easier to learn other CPU architectures.
+ Mainly the register is needed for .....??? They are needed for fast data transactions.
+ What is the port in the CPU? Port is a specialized register in a hardware device used for communciation with other devices.
+ What is a RAM? it is storage device! Applcation of a memory.
+ What is a MCH?
+ What is a Cache inside the chip then? they are used for dynamic programming concept, they are true optimizers of speed.
+
+# x86 architecture
+------------------
+How to program an x86 CPU? There are three manuals writting for it  Volume I is almost 500 pages, Volume 2 is over 2000 pages, while volume 3 is 1000 pages.
+
+Intel Q35 Chipset -- 2007;
+
+#---------Chapter 4-----------
+x86 Assembly and C
+<<objdump>> entensively to read x86 assembly code.
+
+$ objdump -d hello
+It has many flags which is useful to learn. $ objdump -S hello | less and so on;
+
+The assembly instructions has the following format:
+The first column is an address of assembly instructions
+The second column is the assembly instruction in hex values
+The third column is the assembly instruciton. 
+The optional fourth column is a comment appears when there is a reference to an address. 
+
+
+
+Anatomy of an Assembly Instruction
+----------------------------------
+
+Anatomy of a Program
+--------------------
+Every program consists of code and data, and only those two components made up a program.
+When a source file is compiled, the generated machine code is stored into an object file, which is just a block of binary.  One or more object files can be combined to produce an executable binary, which is complete program runnable in an operating system.
+Each object file or executable binaries has an ELF binary;
+
+
+<<readelf>> is a program that recognizes and displays the ELF metadata of a binary file, be itan object file or an executable binary. ELF - Executable and Linkable Format, is the content at the very beginning of an executable to provide an operating system necessary information to load into main memory and run the executable.
+
+
+$ readelf -g a.out # it shows the ELF Header info
+
+
+An ELF binary is composed of:
+  - An ELF header: the very first section of an executable that describes the file's organization.
+  - A program header table: is an array of fixed-size structures that describes segments of an executable.
+  - A section header table: is an array of fixed-size structures that describes sections of an executable.
+  - Segments and sections are the main content of an ELF binary, which are the code and data, divided into chunks of different purposes.
+  
+
+
+
+
+  
+  --------------------
+  ELF Header
+  --------------------
+  Program header table
+  --------------------
+  .text
+  --------------------
+  .rodata
+  --------------------
+  ...
+  --------------------
+  .data
+  --------------------
+  Section header table
+  --------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
