@@ -1,0 +1,18 @@
+
+
+Discriminator
+----
+
+
+Generator
+----
+
+
+MNIST:
+
+
+for epoch in epochs:
+  generate the image
+  then tell the discriminator to classify real images
+
+
