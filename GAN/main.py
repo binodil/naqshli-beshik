@@ -35,76 +35,105 @@ class Discriminator:
       Tensor.leakyrelu,
       nn.Linear(256, 2, bias=bias),
       # 1) this model should output 2 values not one. model(x) --> [0.1, 0.7]
-      Tensor.log_softmax,
-      #Tensor.sigmoid,
+      Tensor.log_softmax,  # k/(sum(k)
+      #Tensor.sigmoid,     # (k^2)/
     ]
   def __call__(self, x:Tensor) -> Tensor: return x.sequential(self.layers)
 
+
+#-----------------------------------------------------------------------------#
+
 #@TinyJit
 @Tensor.train()
-def train_discriminator(X:Tensor, fake_X) -> Tensor:
+def train_discriminator(X:Tensor, fake_X:Tensor) -> Tensor:
   # Train model on teaching about real images
   D_opt.zero_grad()
-  inpt = X
   y = Tensor.zeros((batch_size, 2))
   # y shape is [64, 2]
-  y_ones = Tensor.ones(batch_size)
-  y_zeros = Tensor.zeros(batch_size)
-  y = Tensor.cat(y_ones, y_zeros)
-  res = D(inpt)
+  y_ones = Tensor.ones(batch_size, 1)
+  y_zeros = Tensor.zeros(batch_size, 1)
+  y = Tensor.cat(y_ones, y_zeros, dim=1)
+  res = D(X)
   #loss = Tensor.binary_crossentropy(res, y).backward()
-  import pdb; pdb.set_trace()
-  loss = (res * y).mean()
+  loss = -1 * (res * y).mean()
   loss.backward()
-  
-
-
+  D_opt.step()
+  # gradient for discriminator
+  D_opt.zero_grad()
+  fake_y = Tensor.cat(y_zeros, y_ones, dim=1)
+  fake_res = D(fake_X)
+  fake_loss = -1 * (fake_res * fake_y).mean()
+  fake_loss.backward()
 
   D_opt.step()
-  return loss
+    #Concerns: If I update twice in each train loop the gradients of discriminator, it might be strong than Generator. What if we update params only once?
+  print("Discriminator loss: ", ((loss + fake_loss)/2).item())
+  return loss + fake_loss  # Maybe summing might be a bad idea!
+
 
 @Tensor.train()
 def train_generator(noise) -> Tensor:
   G_opt.zero_grad()
-  fake_y = Tensor.ones(batch_size)
-  #fake_y = fake_y - 2.0
+  y = Tensor.cat(Tensor.ones(batch_size, 1), Tensor.zeros(batch_size, 1), dim=1)
   generated_images = G(noise)
-  discriminator_res = D(generated_images).squeeze()
-  loss = (discriminator_res * fake_y).mean().backward()
-  #loss = discriminator_res.binary_crossentropy(fake_y).backward()
+  discriminator_res = D(generated_images)
+  loss = -1 * (discriminator_res * y).mean()
+  loss.backward()
   G_opt.step()
+  print("Generator loss: ", loss.item()) 
   return loss
 
 # -log-likelihood = -1 * log(y_pred) * log(y_true)
 D = Discriminator()
 G = Generator()
-D_opt = nn.optim.Adam(nn.state.get_parameters(D), lr=0.005)
-G_opt = nn.optim.Adam(nn.state.get_parameters(G), lr=0.005)
+for m in [D, G]:
+  for l in m.layers:
+    if isinstance(l, nn.Linear):
+      # uniform the weight
+      l.weight = Tensor.scaled_uniform(l.weight.shape)
+      pass
+      # scaled uniform return value between -1 and 1; while uniform by itself return 0 and 1
+
+print("weights are scaled uniform")
+D_opt = nn.optim.Adam(nn.state.get_parameters(D), lr=0.0003)
+G_opt = nn.optim.Adam(nn.state.get_parameters(G), lr=0.0003)
 batch_size=64
 n_steps = X_train.shape[0] // batch_size
-n_steps = 5
 print("batch size: ", batch_size, "n_steps:", n_steps)
+
 
 for i in (t:=trange(getenv("STEPS", 50))):
   #GlobalCounters.reset()  # what does this DEBUG=2 timing do?
-  total_loss = []
+  # MAXIM: it all depends on your faith!
+  #----Training discriminator-----
+  print("Training discriminator")
+  total_d_loss = []
   for _ in range(n_steps): 
     samples = Tensor.randint(getenv("BS", batch_size), high=X_train.shape[0])
     X = X_train[samples]
     y = Tensor.ones(batch_size)
     noise = Tensor.randint(batch_size, 256) / 127.5 - 1.0  # convert to [-1, 1]
-    fake_X = G(noise).detach()
+    fake_X = G(noise)
     d_loss = train_discriminator(X, fake_X)
-    total_loss.append(d_loss.item())
+    total_d_loss.append(d_loss.item())
   
+  print("Training generator")
+  #----Training generator------
   total_g_loss = []
   for _ in range(n_steps):
+    noise = Tensor.randint(batch_size, 256) / 127.5 - 1.0  # convert to [-1, 1]
     g_loss = train_generator(noise)
     total_g_loss.append(g_loss.item())
   
-  print(f'd_loss: {np.array(total_loss).mean():.2f} | g_loss: {np.array(total_g_loss).mean():.2f}') 
-  #t.set_description(f"loss: {loss.item():6.2f}")
+  for m in [D, G]:
+    for idx, layer in enumerate(m.layers):
+      if isinstance(layer, nn.Linear):
+        print("Linear at ", idx, ":", layer.weight.mean().item())
+ 
+  print(f'd_loss: {np.array(total_d_loss).mean():.2f} | g_loss: {np.array(total_g_loss).mean():.2f}') 
 
-  generated_img = G(Tensor.randint(1, 256))
-  cv2.imwrite(f'gan_generated_{i}.png', generated_img.permute(0, 2, 3, 1).numpy()[0])
+  #import pdb; pdb.set_trace()
+  noise = Tensor.randint(1, 256) / 127.5 - 1.0  # convert to [-1, 1]
+  generated_img = G(noise)
+  cv2.imwrite(f'gan_generated_{i}.png', (generated_img[0, 0] * 255).numpy())
 print("Completed")
