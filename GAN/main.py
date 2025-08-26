@@ -7,17 +7,17 @@ from tinygrad.nn.datasets import mnist
 X_train, Y_train, X_test, Y_test = mnist(fashion=getenv("FASHION"))
 X_train = Tensor(X_train.numpy()[Y_train.numpy()==0])
 print(X_train.shape, Y_train.shape, X_test.shape, Y_test.shape)
-
+bias = True
 class Generator:
   def __init__(self):
     self.layers = [
-      nn.Linear(256, 256), # distribution of the linear layer might be different
-      Tensor.relu,  # in working code they use leakyrelu
-      nn.Linear(256, 512),
-      Tensor.relu,
-      nn.Linear(512, 512),
-      Tensor.relu,
-      nn.Linear(512, 784),
+      nn.Linear(256, 256, bias=bias),
+      Tensor.leakyrelu,
+      nn.Linear(256, 512, bias=bias),
+      Tensor.leakyrelu,
+      nn.Linear(512, 512, bias=bias),
+      Tensor.leakyrelu,
+      nn.Linear(512, 784, bias=bias),
       Tensor.tanh,
       lambda x: x.reshape(-1, 1, 28, 28,)
     ]
@@ -27,13 +27,13 @@ class Discriminator:
   def __init__(self):
     self.layers = [
       lambda x: x.flatten(1),
-      nn.Linear(784, 1024),
+      nn.Linear(784, 1024, bias=bias),
       Tensor.leakyrelu,
-      nn.Linear(1024, 512),
+      nn.Linear(1024, 512, bias=bias),
       Tensor.leakyrelu,
-      nn.Linear(512, 256),
+      nn.Linear(512, 256, bias=bias),
       Tensor.leakyrelu,
-      nn.Linear(256, 2),
+      nn.Linear(256, 2, bias=bias),
       # 1) this model should output 2 values not one. model(x) --> [0.1, 0.7]
       Tensor.log_softmax,
       #Tensor.sigmoid,
