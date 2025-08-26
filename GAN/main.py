@@ -5,6 +5,7 @@ from tinygrad import Tensor, nn, TinyJit, GlobalCounters
 from tinygrad.nn.datasets import mnist
 
 X_train, Y_train, X_test, Y_test = mnist(fashion=getenv("FASHION"))
+X_train = Tensor(X_train.numpy()[Y_train.numpy()==0])
 print(X_train.shape, Y_train.shape, X_test.shape, Y_test.shape)
 
 class Generator:
