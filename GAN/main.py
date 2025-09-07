@@ -5,7 +5,7 @@ from tinygrad import Tensor, nn, TinyJit, GlobalCounters
 from tinygrad.nn.datasets import mnist
 
 X_train, Y_train, X_test, Y_test = mnist(fashion=getenv("FASHION"))
-X_train = Tensor(X_train.numpy()[Y_train.numpy()==0])
+#X_train = Tensor(X_train.numpy()[Y_train.numpy()==2])
 print(X_train.shape, Y_train.shape, X_test.shape, Y_test.shape)
 bias = True
 class Generator:
@@ -19,7 +19,8 @@ class Generator:
       Tensor.leakyrelu,
       nn.Linear(512, 784, bias=bias),
       Tensor.tanh,
-      lambda x: x.reshape(-1, 1, 28, 28,)
+      lambda x: x.reshape(-1, 1, 28, 28,),
+      Tensor.relu,
     ]
   def __call__(self, x:Tensor) -> Tensor: return x.sequential(self.layers)
 
@@ -56,15 +57,14 @@ def train_discriminator(X:Tensor, fake_X:Tensor) -> Tensor:
   res = D(X)
   #loss = Tensor.binary_crossentropy(res, y).backward()
   loss = -1 * (res * y).mean()
-  loss.backward()
-  D_opt.step()
+  #D_opt.step()
   # gradient for discriminator
   D_opt.zero_grad()
   fake_y = Tensor.cat(y_zeros, y_ones, dim=1)
   fake_res = D(fake_X)
   fake_loss = -1 * (fake_res * fake_y).mean()
+  loss.backward()
   fake_loss.backward()
-
   D_opt.step()
     #Concerns: If I update twice in each train loop the gradients of discriminator, it might be strong than Generator. What if we update params only once?
   print("Discriminator loss: ", ((loss + fake_loss)/2).item())
@@ -95,9 +95,9 @@ for m in [D, G]:
       # scaled uniform return value between -1 and 1; while uniform by itself return 0 and 1
 
 print("weights are scaled uniform")
-D_opt = nn.optim.Adam(nn.state.get_parameters(D), lr=0.0003)
-G_opt = nn.optim.Adam(nn.state.get_parameters(G), lr=0.0003)
-batch_size=64
+D_opt = nn.optim.Adam(nn.state.get_parameters(D), lr=0.003)
+G_opt = nn.optim.Adam(nn.state.get_parameters(G), lr=0.003)
+batch_size=128
 n_steps = X_train.shape[0] // batch_size
 print("batch size: ", batch_size, "n_steps:", n_steps)
 
@@ -112,7 +112,7 @@ for i in (t:=trange(getenv("STEPS", 50))):
     samples = Tensor.randint(getenv("BS", batch_size), high=X_train.shape[0])
     X = X_train[samples]
     y = Tensor.ones(batch_size)
-    noise = Tensor.randint(batch_size, 256) / 127.5 - 1.0  # convert to [-1, 1]
+    noise = Tensor.randint(batch_size, 256, low=0, high=255) / 127.5 - 1.0  # convert to [-1, 1]
     fake_X = G(noise)
     d_loss = train_discriminator(X, fake_X)
     total_d_loss.append(d_loss.item())
@@ -121,7 +121,7 @@ for i in (t:=trange(getenv("STEPS", 50))):
   #----Training generator------
   total_g_loss = []
   for _ in range(n_steps):
-    noise = Tensor.randint(batch_size, 256) / 127.5 - 1.0  # convert to [-1, 1]
+    noise = Tensor.randint(batch_size, 256, low=0, high=255) / 127.5 - 1.0  # convert to [-1, 1]  # I think this is bad!
     g_loss = train_generator(noise)
     total_g_loss.append(g_loss.item())
   
@@ -132,8 +132,9 @@ for i in (t:=trange(getenv("STEPS", 50))):
  
   print(f'd_loss: {np.array(total_d_loss).mean():.2f} | g_loss: {np.array(total_g_loss).mean():.2f}') 
 
-  #import pdb; pdb.set_trace()
-  noise = Tensor.randint(1, 256) / 127.5 - 1.0  # convert to [-1, 1]
+  noise = Tensor.randint(10, 256, low=0, high=255) / 127.5 - 1.0  # convert to [-1, 1]
   generated_img = G(noise)
-  cv2.imwrite(f'gan_generated_{i}.png', (generated_img[0, 0] * 255).numpy())
+
+  import pdb; pdb.set_trace()
+  cv2.imwrite(f'gan_generated_{i}.png', (np.hstack((generated_img[:,0,:,:] * 255).numpy()).astype(np.uint8)))
 print("Completed")
