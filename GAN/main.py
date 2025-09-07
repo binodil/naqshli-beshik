@@ -20,7 +20,6 @@ class Generator:
       nn.Linear(512, 784, bias=bias),
       Tensor.tanh,
       lambda x: x.reshape(-1, 1, 28, 28,),
-      Tensor.relu,
     ]
   def __call__(self, x:Tensor) -> Tensor: return x.sequential(self.layers)
 
@@ -76,6 +75,7 @@ def train_generator(noise) -> Tensor:
   G_opt.zero_grad()
   y = Tensor.cat(Tensor.ones(batch_size, 1), Tensor.zeros(batch_size, 1), dim=1)
   generated_images = G(noise)
+  generated_images = (generated_images + 1.0) * 127.5
   discriminator_res = D(generated_images)
   loss = -1 * (discriminator_res * y).mean()
   loss.backward()
@@ -114,6 +114,7 @@ for i in (t:=trange(getenv("STEPS", 50))):
     y = Tensor.ones(batch_size)
     noise = Tensor.randint(batch_size, 256, low=0, high=255) / 127.5 - 1.0  # convert to [-1, 1]
     fake_X = G(noise)
+    fake_X = (fake_X + 1.0) * 127.5
     d_loss = train_discriminator(X, fake_X)
     total_d_loss.append(d_loss.item())
   
@@ -136,5 +137,5 @@ for i in (t:=trange(getenv("STEPS", 50))):
   generated_img = G(noise)
 
   import pdb; pdb.set_trace()
-  cv2.imwrite(f'gan_generated_{i}.png', (np.hstack((generated_img[:,0,:,:] * 255).numpy()).astype(np.uint8)))
+  cv2.imwrite(f'gan_generated_{i}.png', (np.hstack(((generated_img[:,0,:,:] + 1.0) * 127.5).numpy()).astype(np.uint8)))
 print("Completed")
