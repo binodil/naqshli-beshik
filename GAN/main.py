@@ -5,8 +5,8 @@ from tinygrad import Tensor, nn, TinyJit, GlobalCounters
 from tinygrad.nn.datasets import mnist
 
 X_train, Y_train, X_test, Y_test = mnist(fashion=getenv("FASHION"))
-X_train = Tensor(X_train.numpy()[Y_train.numpy()==2])
-print(X_train.shape, Y_train.shape, X_test.shape, Y_test.shape)
+X_train = Tensor(X_train.numpy()[Y_train.numpy()==2].astype(np.float32))
+print(X_train.shape, X_train.dtype, Y_train.shape, X_test.shape, Y_test.shape)
 bias = True
 
 class Generator:
