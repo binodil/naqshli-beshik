@@ -82,7 +82,7 @@ def train_gen(optim, model, disc_model, batch_size):
 
 
 if __name__ == "__main__":
-  batch_size = 64*2
+  batch_size = 64*8
   n_iter = len(dataset) // batch_size 
   D = LinearDisc()
   G = LinearGen()
@@ -98,6 +98,7 @@ if __name__ == "__main__":
 
   D_optim = torch.optim.Adam(D.parameters(), lr=0.0003, betas=(0.5, 0.999))
   G_optim = torch.optim.Adam(G.parameters(), lr=0.0003, betas=(0.5, 0.999))
+  new_lr = 0.0003
   for epoch in range(100):
     total_D_loss = []
     D.train()
@@ -124,7 +125,16 @@ if __name__ == "__main__":
     G_out = (G(get_noise(144)) + 1.0 ) * 127.5
     grid_img = make_grid(G_out, nrow=12).permute(1,2, 0).numpy().astype(np.uint8)
     cv2.imwrite(f"gan_epoch_{epoch}.png", grid_img)
+    if epoch % 20 == 0:
+      torch.save(G.state_dict(), f"mnist_generator_{epoch}.pth")
+      torch.save(D.state_dict(), f"mnist_descriminator_{epoch}.pth")
+    
+    new_lr = new_lr - 0.0000029
+    for param_group in D_optim.param_groups:
+      param_group['lr'] = new_lr
 
+    for param_group in G_optim.param_groups:
+      param_group['lr'] = new_lr
 
 
 
