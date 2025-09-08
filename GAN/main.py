@@ -3,7 +3,7 @@ import numpy as np
 from tinygrad.helpers import getenv, colored, trange
 from tinygrad import Tensor, nn, TinyJit, GlobalCounters
 from tinygrad.nn.datasets import mnist
-
+import pdb
 X_train, Y_train, X_test, Y_test = mnist(fashion=getenv("FASHION"))
 X_train = Tensor(X_train.numpy()[Y_train.numpy()==2].astype(np.float32))
 print(X_train.shape, X_train.dtype, Y_train.shape, X_test.shape, Y_test.shape)
@@ -12,11 +12,13 @@ bias = True
 class Generator:
   def __init__(self):
     self.layers = [
-      nn.Linear(256, 256, bias=bias),
-      Tensor.leaky_relu,
       nn.Linear(256, 512, bias=bias),
       Tensor.leaky_relu,
-      nn.Linear(512, 512, bias=bias),
+      #Tensor.dropout(0.2),
+      nn.Linear(512, 1024, bias=bias),
+      Tensor.leaky_relu,
+      #Tensor.dropout(0.2),
+      nn.Linear(1024, 512, bias=bias),
       Tensor.leaky_relu,
       nn.Linear(512, 784, bias=bias),
       Tensor.tanh,
@@ -59,60 +61,67 @@ class Discriminator:
 #@TinyJit
 @Tensor.train()
 def train_discriminator(X:Tensor, fake_X:Tensor) -> Tensor:
-  D_opt.zero_grad()
+  #D_opt.zero_grad()
+  for i, layer in enumerate(D.layers):
+    if isinstance(layer, nn.Linear):
+      D.layers[i].weight.requires_grad = True
+      D.layers[i].weight.grad = None
+      D.layers[i].bias.requires_grad = True
+      D.layers[i].bias.grad = None
   # Train model on teaching about real images
-  y = Tensor.zeros((batch_size, 2))
-  # y shape is [64, 2]
   y_ones = Tensor.ones(batch_size, 1)
   y_zeros = Tensor.zeros(batch_size, 1)
   y = Tensor.cat(y_ones, y_zeros, dim=1)
+  fake_y = Tensor.cat(y_zeros, y_ones, dim=1)
   res = D(X)
-  #loss = Tensor.binary_crossentropy(res, y).backward()
-  loss = -1 * (res * y).mean()
+  loss = (-1 * res * y).sum(1).mean()
+  loss.backward()
   #D_opt.step()
   # gradient for discriminator
   #D_opt.zero_grad()
-  fake_y = Tensor.cat(y_zeros, y_ones, dim=1)
   fake_res = D(fake_X)
-  fake_loss = -1 * (fake_res * fake_y).mean()
-  loss.backward()
+  fake_loss = (-1 * fake_res * fake_y).sum(1).mean()
   fake_loss.backward()
-  D_opt.step()
+  #D_opt.step()
 
   #----manual----
-  #for i, layer in enumerate(D.layers):
-  #  if isinstance(layer, nn.Linear):
-  #    D.layers[i].weight = layer.weight - 0.003 * layer.weight.grad
-  #    D.layers[i].weight.grad = None
-  #    D.layers[i].bias = layer.bias - 0.003 * layer.bias.grad
-  #    D.layers[i].bias.grad = None
+  for i, layer in enumerate(D.layers):
+    if isinstance(layer, nn.Linear):
+      assert layer.weight.grad is not None, pdb.set_trace()
+      print(f"{layer.weight.grad.mean().item()=} | {layer.weight.mean().item()=} | {layer.bias.grad.mean().item()=} | {layer.bias.grad.mean().item()=}")
+      D.layers[i].weight = layer.weight - 0.003 * layer.weight.grad
+      D.layers[i].bias = layer.bias - 0.003 * layer.bias.grad
   ############
-  print("Discriminator loss: ", ((loss + fake_loss)/2).item())
+  print("Discriminator loss: ", ((loss + fake_loss)/2).item(), "D res mean:", res.mean().item(), "fake res mean:", fake_res.mean().item())
   return loss + fake_loss  # Maybe summing might be a bad idea!
 
 
 @Tensor.train()
 def train_generator(noise) -> Tensor:
-  G_opt.zero_grad()
-  generated_images = G(noise)
-  #images = ((generated_images + 1.0) * 127.5)
+  #G_opt.zero_grad()
+  for i, layer in enumerate(G.layers):
+    if isinstance(layer, nn.Linear):
+      G.layers[i].weight.requires_grad = True
+      G.layers[i].weight.grad = None
+      G.layers[i].bias.requires_grad = True
+      G.layers[i].bias.grad = None
+  #
   y = Tensor.cat(Tensor.ones(batch_size, 1), Tensor.zeros(batch_size, 1), dim=1) 
-  discriminator_res = D(generated_images) # is the nan generated un the grad at the D or at the G. when opt_G.step, the G becomes nan. What does cause this?
+  discriminator_res = D(G(noise)) # is the nan generated un the grad at the D or at the G. when opt_G.step, the G becomes nan. What does cause this?
 
-  loss = -1 * (discriminator_res * y).mean()
+  loss = (-1 * discriminator_res * y).sum(1).mean()
   loss.backward() 
   # do the norm of the gradients.
   #print([G.layers[i].weight.grad.mean().item() for i in [0, 2, 4, 6]])
-  G_opt.step()
+  #G_opt.step()
   #---manual optim---
-  #for i, layer in enumerate(G.layers):
-  #  if isinstance(layer, nn.Linear):
-  #    G.layers[i].weight = layer.weight - 0.03 * layer.weight.grad
-  #    G.layers[i].weight.grad = None
-  #    G.layers[i].bias = layer.bias - 0.03 * layer.bias.grad
-  #    G.layers[i].bias.grad = None
+  for i, layer in enumerate(G.layers):
+    if isinstance(layer, nn.Linear):
+      print(f"{layer.weight.grad.mean().item()=} | {layer.weight.mean().item()=} | {layer.bias.grad.mean().item()=} | {layer.bias.grad.mean().item()=}")
+      G.layers[i].weight = layer.weight - 0.03 * layer.weight.grad
+      G.layers[i].bias = layer.bias - 0.03 * layer.bias.grad
   #-----------------
-  print("Generator loss: ", loss.item()) 
+  print("Generator loss: ", loss.item(), "noise mean val:", noise.mean().item(), "D output mean:", discriminator_res.mean().item()) 
   return loss
 
 # -log-likelihood = -1 * log(y_pred) * log(y_true)
@@ -124,15 +133,13 @@ for m in [D, G]:
       # uniform the weight
       l.weight = Tensor.scaled_uniform(l.weight.shape)
       l.bias = Tensor.zeros_like(l.bias)
-      pass
       # scaled uniform return value between -1 and 1; while uniform by itself return 0 and 1
 
 print("weights are scaled uniform")
-D_opt = nn.optim.SGD(nn.state.get_parameters(D), lr=0.0002, classic=True)
-
-G_opt = nn.optim.SGD(nn.state.get_parameters(G), lr=0.0002, classic=True, weight_decay=0.0001, momentum=0.001)
+#D_opt = nn.optim.SGD(nn.state.get_parameters(D), lr=0.02)
+##G_opt = nn.optim.SGD(nn.state.get_parameters(G), lr=0.02)
 batch_size=32
-n_steps = 10 #X_train.shape[0] // batch_size
+n_steps = 4 #X_train.shape[0] // batch_size
 print("batch size: ", batch_size, "n_steps:", n_steps)
 
 
@@ -146,13 +153,14 @@ for i in (t:=trange(getenv("STEPS", 50))):
     samples = Tensor.randint(getenv("BS", batch_size), high=X_train.shape[0])
     X = X_train[samples]
     X = X/127.5 - 1.0
-    y = Tensor.ones(batch_size)
     noise = Tensor.randint(batch_size, 256, low=0, high=255) / 127.5 - 1.0  # convert to [-1, 1]
+    print(noise.dtype)
+    print(X.dtype)
     fake_X = G(noise)
     #print(X.mean().item(), fake_X.mean().item())
     d_loss = train_discriminator(X, fake_X)
     total_d_loss.append(d_loss.item())
-  
+
   print("Training generator")
   #----Training generator------
   total_g_loss = []
