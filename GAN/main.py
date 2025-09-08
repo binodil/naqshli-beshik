@@ -59,8 +59,8 @@ class Discriminator:
 #@TinyJit
 @Tensor.train()
 def train_discriminator(X:Tensor, fake_X:Tensor) -> Tensor:
-  # Train model on teaching about real images
   D_opt.zero_grad()
+  # Train model on teaching about real images
   y = Tensor.zeros((batch_size, 2))
   # y shape is [64, 2]
   y_ones = Tensor.ones(batch_size, 1)
@@ -78,7 +78,15 @@ def train_discriminator(X:Tensor, fake_X:Tensor) -> Tensor:
   loss.backward()
   fake_loss.backward()
   D_opt.step()
-    #Concerns: If I update twice in each train loop the gradients of discriminator, it might be strong than Generator. What if we update params only once?
+
+  #----manual----
+  #for i, layer in enumerate(D.layers):
+  #  if isinstance(layer, nn.Linear):
+  #    D.layers[i].weight = layer.weight - 0.003 * layer.weight.grad
+  #    D.layers[i].weight.grad = None
+  #    D.layers[i].bias = layer.bias - 0.003 * layer.bias.grad
+  #    D.layers[i].bias.grad = None
+  ############
   print("Discriminator loss: ", ((loss + fake_loss)/2).item())
   return loss + fake_loss  # Maybe summing might be a bad idea!
 
@@ -86,16 +94,24 @@ def train_discriminator(X:Tensor, fake_X:Tensor) -> Tensor:
 @Tensor.train()
 def train_generator(noise) -> Tensor:
   G_opt.zero_grad()
-  D_opt.zero_grad()
-  import pdb;pdb.set_trace()
-  y = Tensor.cat(Tensor.ones(batch_size, 1), Tensor.zeros(batch_size, 1), dim=1)
   generated_images = G(noise)
+  #images = ((generated_images + 1.0) * 127.5)
+  y = Tensor.cat(Tensor.ones(batch_size, 1), Tensor.zeros(batch_size, 1), dim=1) 
   discriminator_res = D(generated_images) # is the nan generated un the grad at the D or at the G. when opt_G.step, the G becomes nan. What does cause this?
+
   loss = -1 * (discriminator_res * y).mean()
   loss.backward() 
   # do the norm of the gradients.
   #print([G.layers[i].weight.grad.mean().item() for i in [0, 2, 4, 6]])
   G_opt.step()
+  #---manual optim---
+  #for i, layer in enumerate(G.layers):
+  #  if isinstance(layer, nn.Linear):
+  #    G.layers[i].weight = layer.weight - 0.03 * layer.weight.grad
+  #    G.layers[i].weight.grad = None
+  #    G.layers[i].bias = layer.bias - 0.03 * layer.bias.grad
+  #    G.layers[i].bias.grad = None
+  #-----------------
   print("Generator loss: ", loss.item()) 
   return loss
 
@@ -112,8 +128,9 @@ for m in [D, G]:
       # scaled uniform return value between -1 and 1; while uniform by itself return 0 and 1
 
 print("weights are scaled uniform")
-D_opt = nn.optim.Adam(nn.state.get_parameters(D), lr=0.003)
-G_opt = nn.optim.Adam(nn.state.get_parameters(G), lr=0.003)
+D_opt = nn.optim.SGD(nn.state.get_parameters(D), lr=0.0002, classic=True)
+
+G_opt = nn.optim.SGD(nn.state.get_parameters(G), lr=0.0002, classic=True, weight_decay=0.0001, momentum=0.001)
 batch_size=32
 n_steps = 10 #X_train.shape[0] // batch_size
 print("batch size: ", batch_size, "n_steps:", n_steps)
@@ -132,7 +149,7 @@ for i in (t:=trange(getenv("STEPS", 50))):
     y = Tensor.ones(batch_size)
     noise = Tensor.randint(batch_size, 256, low=0, high=255) / 127.5 - 1.0  # convert to [-1, 1]
     fake_X = G(noise)
-    print(X.mean().item(), fake_X.mean().item())
+    #print(X.mean().item(), fake_X.mean().item())
     d_loss = train_discriminator(X, fake_X)
     total_d_loss.append(d_loss.item())
   
