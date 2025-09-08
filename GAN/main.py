@@ -5,34 +5,41 @@ from tinygrad import Tensor, nn, TinyJit, GlobalCounters
 from tinygrad.nn.datasets import mnist
 
 X_train, Y_train, X_test, Y_test = mnist(fashion=getenv("FASHION"))
-#X_train = Tensor(X_train.numpy()[Y_train.numpy()==2])
+X_train = Tensor(X_train.numpy()[Y_train.numpy()==2])
 print(X_train.shape, Y_train.shape, X_test.shape, Y_test.shape)
 bias = True
+
 class Generator:
   def __init__(self):
     self.layers = [
       nn.Linear(256, 256, bias=bias),
-      Tensor.leakyrelu,
+      Tensor.leaky_relu,
       nn.Linear(256, 512, bias=bias),
-      Tensor.leakyrelu,
+      Tensor.leaky_relu,
       nn.Linear(512, 512, bias=bias),
-      Tensor.leakyrelu,
+      Tensor.leaky_relu,
       nn.Linear(512, 784, bias=bias),
       Tensor.tanh,
       lambda x: x.reshape(-1, 1, 28, 28,),
     ]
   def __call__(self, x:Tensor) -> Tensor: return x.sequential(self.layers)
+  def debug(self,):
+    for l in self.layers:
+      if isinstance(l, nn.Linear):
+        print("Does it has a nan in weight and its grad, bias and its grad:", l.weight.isnan().any().item(), l.weight.grad.isnan().any().item(), l.bias.isnan().any().item(), l.bias.grad.isnan().any().item())
+        print("Does it has an inf in weight and its grad, bias and its grad:", l.weight.isinf().any().item(), l.weight.grad.isinf().any().item(), l.bias.isinf().any().item(), l.bias.grad.isinf().any().item())
+        
 
 class Discriminator:
   def __init__(self):
     self.layers = [
       lambda x: x.flatten(1),
       nn.Linear(784, 1024, bias=bias),
-      Tensor.leakyrelu,
+      Tensor.leaky_relu,
       nn.Linear(1024, 512, bias=bias),
-      Tensor.leakyrelu,
+      Tensor.leaky_relu,
       nn.Linear(512, 256, bias=bias),
-      Tensor.leakyrelu,
+      Tensor.leaky_relu,
       nn.Linear(256, 2, bias=bias),
       # 1) this model should output 2 values not one. model(x) --> [0.1, 0.7]
       Tensor.log_softmax,  # k/(sum(k)
@@ -40,6 +47,12 @@ class Discriminator:
     ]
   def __call__(self, x:Tensor) -> Tensor: return x.sequential(self.layers)
 
+  def debug(self,):
+    for l in self.layers:
+      if isinstance(l, nn.Linear):
+        print("Does it has a nan in weight and its grad, bias and its grad:", l.weight.isnan().any().item(), l.weight.grad.isnan().any().item(), l.bias.isnan().any().item(), l.bias.grad.isnan().any().item())
+        print("Does it has an inf in weight and its grad, bias and its grad:", l.weight.isinf().any().item(), l.weight.grad.isinf().any().item(), l.bias.isinf().any().item(), l.bias.grad.isinf().any().item())
+  
 
 #-----------------------------------------------------------------------------#
 
@@ -58,7 +71,7 @@ def train_discriminator(X:Tensor, fake_X:Tensor) -> Tensor:
   loss = -1 * (res * y).mean()
   #D_opt.step()
   # gradient for discriminator
-  D_opt.zero_grad()
+  #D_opt.zero_grad()
   fake_y = Tensor.cat(y_zeros, y_ones, dim=1)
   fake_res = D(fake_X)
   fake_loss = -1 * (fake_res * fake_y).mean()
@@ -73,12 +86,15 @@ def train_discriminator(X:Tensor, fake_X:Tensor) -> Tensor:
 @Tensor.train()
 def train_generator(noise) -> Tensor:
   G_opt.zero_grad()
+  D_opt.zero_grad()
+  import pdb;pdb.set_trace()
   y = Tensor.cat(Tensor.ones(batch_size, 1), Tensor.zeros(batch_size, 1), dim=1)
   generated_images = G(noise)
-  generated_images = (generated_images + 1.0) * 127.5
-  discriminator_res = D(generated_images)
+  discriminator_res = D(generated_images) # is the nan generated un the grad at the D or at the G. when opt_G.step, the G becomes nan. What does cause this?
   loss = -1 * (discriminator_res * y).mean()
-  loss.backward()
+  loss.backward() 
+  # do the norm of the gradients.
+  #print([G.layers[i].weight.grad.mean().item() for i in [0, 2, 4, 6]])
   G_opt.step()
   print("Generator loss: ", loss.item()) 
   return loss
@@ -91,14 +107,15 @@ for m in [D, G]:
     if isinstance(l, nn.Linear):
       # uniform the weight
       l.weight = Tensor.scaled_uniform(l.weight.shape)
+      l.bias = Tensor.zeros_like(l.bias)
       pass
       # scaled uniform return value between -1 and 1; while uniform by itself return 0 and 1
 
 print("weights are scaled uniform")
 D_opt = nn.optim.Adam(nn.state.get_parameters(D), lr=0.003)
 G_opt = nn.optim.Adam(nn.state.get_parameters(G), lr=0.003)
-batch_size=128
-n_steps = X_train.shape[0] // batch_size
+batch_size=32
+n_steps = 10 #X_train.shape[0] // batch_size
 print("batch size: ", batch_size, "n_steps:", n_steps)
 
 
@@ -111,10 +128,11 @@ for i in (t:=trange(getenv("STEPS", 50))):
   for _ in range(n_steps): 
     samples = Tensor.randint(getenv("BS", batch_size), high=X_train.shape[0])
     X = X_train[samples]
+    X = X/127.5 - 1.0
     y = Tensor.ones(batch_size)
     noise = Tensor.randint(batch_size, 256, low=0, high=255) / 127.5 - 1.0  # convert to [-1, 1]
     fake_X = G(noise)
-    fake_X = (fake_X + 1.0) * 127.5
+    print(X.mean().item(), fake_X.mean().item())
     d_loss = train_discriminator(X, fake_X)
     total_d_loss.append(d_loss.item())
   
@@ -137,5 +155,7 @@ for i in (t:=trange(getenv("STEPS", 50))):
   generated_img = G(noise)
 
   import pdb; pdb.set_trace()
-  cv2.imwrite(f'gan_generated_{i}.png', (np.hstack(((generated_img[:,0,:,:] + 1.0) * 127.5).numpy()).astype(np.uint8)))
+  image = np.hstack(((generated_img[:,0,:,:] + 1.0) * 127.5).numpy())
+  image = image.astype(np.uint8)
+  cv2.imwrite(f'gan_generated_{i}.png', image)
 print("Completed")
