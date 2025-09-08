@@ -5,20 +5,17 @@ from tinygrad import Tensor, nn, TinyJit, GlobalCounters
 from tinygrad.nn.datasets import mnist
 import pdb
 X_train, Y_train, X_test, Y_test = mnist(fashion=getenv("FASHION"))
-X_train = Tensor(X_train.numpy()[Y_train.numpy()==2].astype(np.float32))
-print(X_train.shape, X_train.dtype, Y_train.shape, X_test.shape, Y_test.shape)
+print(X_train.shape, Y_train.shape, X_test.shape, Y_test.shape)
 bias = True
 
 class Generator:
   def __init__(self):
     self.layers = [
+      nn.Linear(256, 256, bias=bias),
+      Tensor.leaky_relu,
       nn.Linear(256, 512, bias=bias),
       Tensor.leaky_relu,
-      #Tensor.dropout(0.2),
-      nn.Linear(512, 1024, bias=bias),
-      Tensor.leaky_relu,
-      #Tensor.dropout(0.2),
-      nn.Linear(1024, 512, bias=bias),
+      nn.Linear(512, 512, bias=bias),
       Tensor.leaky_relu,
       nn.Linear(512, 784, bias=bias),
       Tensor.tanh,
@@ -72,6 +69,11 @@ def train_discriminator(X:Tensor, fake_X:Tensor) -> Tensor:
   y_ones = Tensor.ones(batch_size, 1)
   y_zeros = Tensor.zeros(batch_size, 1)
   y = Tensor.cat(y_ones, y_zeros, dim=1)
+  res = D(X)
+  #loss = Tensor.binary_crossentropy(res, y).backward()
+  loss = (-1 * res * y * 0.5).sum(1).mean()
+  # gradient for discriminator
+  D_opt.zero_grad()
   fake_y = Tensor.cat(y_zeros, y_ones, dim=1)
   res = D(X)
   loss = (-1 * res * y).sum(1).mean()
@@ -80,7 +82,8 @@ def train_discriminator(X:Tensor, fake_X:Tensor) -> Tensor:
   # gradient for discriminator
   #D_opt.zero_grad()
   fake_res = D(fake_X)
-  fake_loss = (-1 * fake_res * fake_y).sum(1).mean()
+  fake_loss = (-1 * fake_res * fake_y * 0.5).sum(1).mean()
+  loss.backward()
   fake_loss.backward()
   #D_opt.step()
 
@@ -122,6 +125,16 @@ def train_generator(noise) -> Tensor:
       G.layers[i].bias = layer.bias - 0.03 * layer.bias.grad
   #-----------------
   print("Generator loss: ", loss.item(), "noise mean val:", noise.mean().item(), "D output mean:", discriminator_res.mean().item()) 
+  G_opt.zero_grad()
+  #import pdb; pdb.set_trace()
+  y = Tensor.cat(Tensor.ones(batch_size, 1), Tensor.zeros(batch_size, 1), dim=1)
+  generated_images = G(noise)
+  discriminator_res = D(generated_images)
+  loss = (-1 * discriminator_res * y * 0.5).sum(1).mean()
+  loss.backward()
+  
+  G_opt.step()
+  print("Generator loss: ", loss.item()) 
   return loss
 
 # -log-likelihood = -1 * log(y_pred) * log(y_true)
@@ -136,11 +149,16 @@ for m in [D, G]:
       # scaled uniform return value between -1 and 1; while uniform by itself return 0 and 1
 
 print("weights are scaled uniform")
-#D_opt = nn.optim.SGD(nn.state.get_parameters(D), lr=0.02)
-##G_opt = nn.optim.SGD(nn.state.get_parameters(G), lr=0.02)
-batch_size=32
+D_opt = nn.optim.Adam(nn.state.get_parameters(D), lr=0.0003)
+G_opt = nn.optim.Adam(nn.state.get_parameters(G), lr=0.0003)
+batch_size=64
 n_steps = 4 #X_train.shape[0] // batch_size
 print("batch size: ", batch_size, "n_steps:", n_steps)
+
+def generate_noise(batch_size):
+  #noise = Tensor.randint(batch_size, 256, high=255) / 127.5 - 1.0 
+  noise = Tensor.normal(batch_size, 256)  # the distribution of the noise may create an issue with the backprop and optim step
+  return noise
 
 
 for i in (t:=trange(getenv("STEPS", 50))):
@@ -150,12 +168,9 @@ for i in (t:=trange(getenv("STEPS", 50))):
   print("Training discriminator")
   total_d_loss = []
   for _ in range(n_steps): 
-    samples = Tensor.randint(getenv("BS", batch_size), high=X_train.shape[0])
-    X = X_train[samples]
-    X = X/127.5 - 1.0
-    noise = Tensor.randint(batch_size, 256, low=0, high=255) / 127.5 - 1.0  # convert to [-1, 1]
-    print(noise.dtype)
-    print(X.dtype)
+    X = X_train[samples] / 127.5 - 1.0
+    y = Tensor.ones(batch_size)
+    noise = generate_noise(batch_size)
     fake_X = G(noise)
     #print(X.mean().item(), fake_X.mean().item())
     d_loss = train_discriminator(X, fake_X)
@@ -165,7 +180,7 @@ for i in (t:=trange(getenv("STEPS", 50))):
   #----Training generator------
   total_g_loss = []
   for _ in range(n_steps):
-    noise = Tensor.randint(batch_size, 256, low=0, high=255) / 127.5 - 1.0  # convert to [-1, 1]  # I think this is bad!
+    noise = generate_noise(batch_size)
     g_loss = train_generator(noise)
     total_g_loss.append(g_loss.item())
   
@@ -176,11 +191,7 @@ for i in (t:=trange(getenv("STEPS", 50))):
  
   print(f'd_loss: {np.array(total_d_loss).mean():.2f} | g_loss: {np.array(total_g_loss).mean():.2f}') 
 
-  noise = Tensor.randint(10, 256, low=0, high=255) / 127.5 - 1.0  # convert to [-1, 1]
+  noise = generate_noise(10)
   generated_img = G(noise)
-
-  import pdb; pdb.set_trace()
-  image = np.hstack(((generated_img[:,0,:,:] + 1.0) * 127.5).numpy())
-  image = image.astype(np.uint8)
-  cv2.imwrite(f'gan_generated_{i}.png', image)
+  cv2.imwrite(f'gan_generated_{i}.png', np.hstack(((generated_img[:, 0] + 1.0) * 127.5).numpy()).astype(np.uint8))
 print("Completed")
