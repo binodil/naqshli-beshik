@@ -63,7 +63,6 @@ def train_disc(optim, model, real_x, gen_x):
   gen_loss.backward()
 
   optim.step()
-  print(gen_loss.item(), loss.item())
   return (gen_loss + loss).item()
 
 def train_gen(optim, model, disc_model, batch_size):
@@ -83,8 +82,8 @@ def train_gen(optim, model, disc_model, batch_size):
 
 
 if __name__ == "__main__":
-  n_iter = 128 * 2
   batch_size = 64*2
+  n_iter = len(dataset) // batch_size 
   D = LinearDisc()
   G = LinearGen()
   for param in D.parameters():

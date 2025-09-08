@@ -55,12 +55,12 @@ def train_discriminator(X:Tensor, fake_X:Tensor) -> Tensor:
   y = Tensor.cat(y_ones, y_zeros, dim=1)
   res = D(X)
   #loss = Tensor.binary_crossentropy(res, y).backward()
-  loss = (-1 * res * y).sum(1).mean()
+  loss = (-1 * res * y * 0.5).sum(1).mean()
   # gradient for discriminator
   D_opt.zero_grad()
   fake_y = Tensor.cat(y_zeros, y_ones, dim=1)
   fake_res = D(fake_X)
-  fake_loss = (-1 * fake_res * fake_y).sum(1).mean()
+  fake_loss = (-1 * fake_res * fake_y * 0.5).sum(1).mean()
   loss.backward()
   fake_loss.backward()
 
@@ -73,11 +73,13 @@ def train_discriminator(X:Tensor, fake_X:Tensor) -> Tensor:
 @Tensor.train()
 def train_generator(noise) -> Tensor:
   G_opt.zero_grad()
+  #import pdb; pdb.set_trace()
   y = Tensor.cat(Tensor.ones(batch_size, 1), Tensor.zeros(batch_size, 1), dim=1)
   generated_images = G(noise)
   discriminator_res = D(generated_images)
-  loss = (-1 * discriminator_res * y).sum(1).mean()
+  loss = (-1 * discriminator_res * y * 0.5).sum(1).mean()
   loss.backward()
+  
   G_opt.step()
   print("Generator loss: ", loss.item()) 
   return loss
@@ -97,12 +99,12 @@ print("weights are scaled uniform")
 D_opt = nn.optim.Adam(nn.state.get_parameters(D), lr=0.0003)
 G_opt = nn.optim.Adam(nn.state.get_parameters(G), lr=0.0003)
 batch_size=64
-n_steps = X_train.shape[0] // batch_size
+n_steps = 4 #X_train.shape[0] // batch_size
 print("batch size: ", batch_size, "n_steps:", n_steps)
 
 def generate_noise(batch_size):
-  noise = Tensor.randint(batch_size, 256, high=255) / 127.5 - 1.0 
-  #noise = Tensor.normal(batch_size, 256)  # the distribution of the noise may create an issue with the backprop and optim step
+  #noise = Tensor.randint(batch_size, 256, high=255) / 127.5 - 1.0 
+  noise = Tensor.normal(batch_size, 256)  # the distribution of the noise may create an issue with the backprop and optim step
   return noise
 
 
