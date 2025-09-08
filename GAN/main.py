@@ -5,18 +5,18 @@ from tinygrad import Tensor, nn, TinyJit, GlobalCounters
 from tinygrad.nn.datasets import mnist
 
 X_train, Y_train, X_test, Y_test = mnist(fashion=getenv("FASHION"))
-X_train = Tensor(X_train.numpy()[Y_train.numpy()==0])
+X_train = Tensor(X_train.numpy()[Y_train.numpy()==0].astype(np.float32))
 print(X_train.shape, Y_train.shape, X_test.shape, Y_test.shape)
 bias = True
 class Generator:
   def __init__(self):
     self.layers = [
       nn.Linear(256, 256, bias=bias),
-      Tensor.leakyrelu,
+      Tensor.leaky_relu,
       nn.Linear(256, 512, bias=bias),
-      Tensor.leakyrelu,
+      Tensor.leaky_relu,
       nn.Linear(512, 512, bias=bias),
-      Tensor.leakyrelu,
+      Tensor.leaky_relu,
       nn.Linear(512, 784, bias=bias),
       Tensor.tanh,
       lambda x: x.reshape(-1, 1, 28, 28,)
@@ -28,11 +28,11 @@ class Discriminator:
     self.layers = [
       lambda x: x.flatten(1),
       nn.Linear(784, 1024, bias=bias),
-      Tensor.leakyrelu,
+      Tensor.leaky_relu,
       nn.Linear(1024, 512, bias=bias),
-      Tensor.leakyrelu,
+      Tensor.leaky_relu,
       nn.Linear(512, 256, bias=bias),
-      Tensor.leakyrelu,
+      Tensor.leaky_relu,
       nn.Linear(256, 2, bias=bias),
       # 1) this model should output 2 values not one. model(x) --> [0.1, 0.7]
       Tensor.log_softmax,  # k/(sum(k)
@@ -55,14 +55,13 @@ def train_discriminator(X:Tensor, fake_X:Tensor) -> Tensor:
   y = Tensor.cat(y_ones, y_zeros, dim=1)
   res = D(X)
   #loss = Tensor.binary_crossentropy(res, y).backward()
-  loss = -1 * (res * y).mean()
-  loss.backward()
-  D_opt.step()
+  loss = (-1 * res * y).sum(1).mean()
   # gradient for discriminator
   D_opt.zero_grad()
   fake_y = Tensor.cat(y_zeros, y_ones, dim=1)
   fake_res = D(fake_X)
-  fake_loss = -1 * (fake_res * fake_y).mean()
+  fake_loss = (-1 * fake_res * fake_y).sum(1).mean()
+  loss.backward()
   fake_loss.backward()
 
   D_opt.step()
@@ -77,7 +76,7 @@ def train_generator(noise) -> Tensor:
   y = Tensor.cat(Tensor.ones(batch_size, 1), Tensor.zeros(batch_size, 1), dim=1)
   generated_images = G(noise)
   discriminator_res = D(generated_images)
-  loss = -1 * (discriminator_res * y).mean()
+  loss = (-1 * discriminator_res * y).sum(1).mean()
   loss.backward()
   G_opt.step()
   print("Generator loss: ", loss.item()) 
@@ -101,6 +100,11 @@ batch_size=64
 n_steps = X_train.shape[0] // batch_size
 print("batch size: ", batch_size, "n_steps:", n_steps)
 
+def generate_noise(batch_size):
+  noise = Tensor.randint(batch_size, 256, high=255) / 127.5 - 1.0 
+  #noise = Tensor.normal(batch_size, 256)  # the distribution of the noise may create an issue with the backprop and optim step
+  return noise
+
 
 for i in (t:=trange(getenv("STEPS", 50))):
   #GlobalCounters.reset()  # what does this DEBUG=2 timing do?
@@ -110,9 +114,9 @@ for i in (t:=trange(getenv("STEPS", 50))):
   total_d_loss = []
   for _ in range(n_steps): 
     samples = Tensor.randint(getenv("BS", batch_size), high=X_train.shape[0])
-    X = X_train[samples]
+    X = X_train[samples] / 127.5 - 1.0
     y = Tensor.ones(batch_size)
-    noise = Tensor.randint(batch_size, 256) / 127.5 - 1.0  # convert to [-1, 1]
+    noise = generate_noise(batch_size)
     fake_X = G(noise)
     d_loss = train_discriminator(X, fake_X)
     total_d_loss.append(d_loss.item())
@@ -121,7 +125,7 @@ for i in (t:=trange(getenv("STEPS", 50))):
   #----Training generator------
   total_g_loss = []
   for _ in range(n_steps):
-    noise = Tensor.randint(batch_size, 256) / 127.5 - 1.0  # convert to [-1, 1]
+    noise = generate_noise(batch_size)
     g_loss = train_generator(noise)
     total_g_loss.append(g_loss.item())
   
@@ -133,7 +137,7 @@ for i in (t:=trange(getenv("STEPS", 50))):
   print(f'd_loss: {np.array(total_d_loss).mean():.2f} | g_loss: {np.array(total_g_loss).mean():.2f}') 
 
   #import pdb; pdb.set_trace()
-  noise = Tensor.randint(1, 256) / 127.5 - 1.0  # convert to [-1, 1]
+  noise = generate_noise(10)
   generated_img = G(noise)
-  cv2.imwrite(f'gan_generated_{i}.png', (generated_img[0, 0] * 255).numpy())
+  cv2.imwrite(f'gan_generated_{i}.png', np.hstack(((generated_img[:, 0] + 1.0) * 127.5).numpy()).astype(np.uint8))
 print("Completed")
